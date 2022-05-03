@@ -1,0 +1,55 @@
+int /[0-9]+/ { Int32.Parse(text).ToString() }
+double /[0-9]+(\.[0-9]*)?([eE][\+\-]?[0-9]+)?/ { Double.Parse(text).ToString() }
+plus /\+/ { '+' }
+minus /\-/ { '-' }
+mul /\*/ { '*' }
+del /\// { '/' }
+pow /\^/ { '^' }
+def /def/ { "def" }
+lparen /\(/ { '(' }
+rparen /\)/ { ')' }
+comma /,/ { ',' }
+assign /=/ { '=' }
+type /Int|Double/
+id /[a-z_][a-z_0-9]*/ { text }
+/ +/
+%%
+
+%top {
+using System.Linq;
+using System.Text;
+}
+
+E -> %left6 E plus E { new StringBuilder().Append('+').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | %left6 E minus E { new StringBuilder().Append('-').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | %left7 E mul E { new StringBuilder().Append('*').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | %left7 E del E { new StringBuilder().Append('/').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | %right8 E pow E { new StringBuilder().Append('^').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | %right1 F assign E { new StringBuilder().Append('=').Append('(').Append((string) _1).Append(", ").Append((string) _3).Append(')').ToString() }
+    | lparen E rparen { new StringBuilder((string) _2).ToString() }
+    | double { new StringBuilder((string) _1).ToString() }
+    | int { new StringBuilder((string) _1).ToString() }
+    | id { new StringBuilder((string) _1).ToString() }
+    | %non9 minus E { new StringBuilder().Append('-').Append('(').Append((string) _2).Append(')').ToString() }
+    | id lparen Args rparen { new StringBuilder((string) _1).Append('(').Append((string) _3).Append(')').ToString() }
+    ;
+
+F -> def id lparen DefArgs rparen { new StringBuilder("def").Append(' ').Append((string) _2).Append('(').Append((string) _4).Append(')').ToString() }
+    | id { new StringBuilder((string) _1).ToString() }
+    ;
+
+Args ->
+    | Args1 { new StringBuilder((string) _1).ToString() }
+    ;
+
+Args1 -> E comma Args1 { new StringBuilder((string) _1).Append(", ").Append((string) _3).ToString() }
+    | E { new StringBuilder((string) _1).ToString() }
+    ;
+
+DefArgs ->
+    | DefArgs1 { new StringBuilder((string) _1).ToString() }
+    ;
+
+DefArgs1 -> id comma DefArgs1 { new StringBuilder((string) _1).Append(", ").Append((string) _3).ToString() }
+    | id { new StringBuilder((string) _1).ToString() }
+    ;

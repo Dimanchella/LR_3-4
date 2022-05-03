@@ -1,0 +1,60 @@
+int /[0-9]+/ { text }
+double /[0-9]+(\.[0-9]*)?([eE][\+\-]?[0-9]+)?/ { text }
+plus /\+/ { '+' }
+minus /\-/ { '-' }
+mul /\*/ { '*' }
+del /\// { '/' }
+pow /\^/ { '^' }
+lparen /\(/ { '(' }
+rparen /\)/ { ')' }
+comma /,/ { ',' }
+colon /:/ { ':' }
+assign /=/ { '=' }
+def /def/ { text }
+type /int|double/ { text }
+id /[a-z_][a-z_0-9]*/ { text }
+/ +/
+%%
+
+%top {
+using System.Linq;
+
+using ParseAlpaca1;
+}
+
+S -> %right1 F assign E { new TreeNode("=", "assign", (TreeNode) _1, (TreeNode) _3) }
+    | E { (TreeNode) _1 }
+    ;
+
+F -> def id lparen DefArgs rparen { new TreeNode((string) _2, "def", (TreeNode[]) _4) }
+    | id { new TreeNode((string) _1, "var") }
+    ;
+
+E -> %left6 E plus E { new TreeNode("+", "operation", (TreeNode) _1, (TreeNode) _3) }
+    | %left6 E minus E { new TreeNode("-", "operation", (TreeNode) _1, (TreeNode) _3) }
+    | %left7 E mul E { new TreeNode("*", "operation", (TreeNode) _1, (TreeNode) _3) }
+    | %left7 E del E { new TreeNode("/", "operation", (TreeNode) _1, (TreeNode) _3) }
+    | %right8 E pow E { new TreeNode("^", "operation", (TreeNode) _1, (TreeNode) _3) }
+    | lparen E rparen { new TreeNode(((TreeNode) _2).ToString(), "unknown") }
+    | double { new TreeNode((string) _1, "double") }
+    | int { new TreeNode((string) _1, "int") }
+    | id { new TreeNode((string) _1, "unknown") }
+    | %non9 minus E { new TreeNode("-", "operation", (TreeNode) _2) }
+    | id lparen Args rparen { new TreeNode((string) _1, "function", (TreeNode[]) _3) }
+    ;
+
+Args -> { TreeNode.MakeNodeArray() }
+    | Args1 { TreeNode.MakeNodeArray((TreeNode[]) _1) }
+    ;
+
+Args1 -> E comma Args1 { TreeNode.MakeNodeArray((TreeNode) _1, (TreeNode[]) _3) }
+    | E { TreeNode.MakeNodeArray((TreeNode) _1) }
+    ;
+
+DefArgs -> { TreeNode.MakeNodeArray() }
+    | DefArgs1 { TreeNode.MakeNodeArray((TreeNode[]) _1) }
+    ;
+
+DefArgs1 -> id colon type comma DefArgs1 { TreeNode.MakeNodeArray(new TreeNode((string) _1, (string) _3), (TreeNode[]) _5) }
+    | id colon type { TreeNode.MakeNodeArray(new TreeNode((string) _1, (string) _3)) }
+    ;

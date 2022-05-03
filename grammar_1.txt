@@ -1,0 +1,33 @@
+number /[0-9]+(\.[0-9]*)?([eE][\+\-]?[0-9]+)?/ { Double.Parse(text) }
+plus /\+/
+minus /\-/
+mul /\*/
+del /\//
+pow /\^/
+id /[a-z_][a-z_0-9]*/ { text }
+lparen /\(/
+rparen /\)/
+comma /,/
+assign /=/
+/ +/
+%%
+
+E -> %left6 E plus E { _1 + _3 }
+   | %left6 E minus E { _1 - _3 }
+   | %left7 E mul E { _1 * _3 }
+   | %left7 E del E { _1 / _3 }
+   | %right8 E pow E { Math.Pow(_1, _3) }
+   | %right1 id assign E { _1 = _3 }
+   | lparen E rparen { _2 }
+   | number { _1 }
+   | id { _1 }
+   | %non9 minus E { -_2 }
+   | %non1 id lparen Args rparen assign E { _1, _3, _6 }
+   ;
+
+Args ->
+      | Args1
+      ;
+Args1 -> id comma Args1 { _1 , _3}
+       | id { _1 }
+       ;
