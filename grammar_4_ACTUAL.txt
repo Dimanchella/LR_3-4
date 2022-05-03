@@ -35,7 +35,7 @@ E -> %left6 E plus E { new TreeNode("+", "operation", (TreeNode) _1, (TreeNode) 
     | %left7 E mul E { new TreeNode("*", "operation", (TreeNode) _1, (TreeNode) _3) }
     | %left7 E del E { new TreeNode("/", "operation", (TreeNode) _1, (TreeNode) _3) }
     | %right8 E pow E { new TreeNode("^", "operation", (TreeNode) _1, (TreeNode) _3) }
-    | lparen E rparen { new TreeNode(((TreeNode) _2).ToString(), "unknown") }
+    | lparen E rparen { (TreeNode) _2 }
     | double { new TreeNode((string) _1, "double") }
     | int { new TreeNode((string) _1, "int") }
     | id { new TreeNode((string) _1, "unknown") }
